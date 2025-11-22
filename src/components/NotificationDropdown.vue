@@ -1,35 +1,111 @@
 <template>
   <div class="notification-dropdown">
-    <!-- Simple Bell Button for Testing -->
+    <!-- Notification Bell Button -->
     <div
-      @click="handleBellClick"
-      style="background: blue; color: white; padding: 10px; border-radius: 50%; cursor: pointer; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 10px;"
+      @click="toggleDropdown"
+      class="notification-bell"
+      :class="{ 'has-unread': unreadCount > 0 }"
+      role="button"
+      tabindex="0"
     >
-      🔔
+      <span class="bell-icon">🔔</span>
+      <span v-if="unreadCount > 0" class="unread-badge">
+        {{ unreadCount > 99 ? '99+' : unreadCount }}
+      </span>
     </div>
 
     <!-- Dropdown Menu -->
-    <div
-      v-show="isOpen"
-      style="position: fixed; top: 60px; right: 20px; width: 300px; height: 200px; background: yellow; border: 2px solid red; padding: 20px; z-index: 10000; box-shadow: 0 0 10px rgba(0,0,0,0.5);"
-    >
-      <h3 style="color: red; margin: 0 0 10px 0;">DROPDOWN TEST</h3>
-      <p style="color: blue;">isOpen: {{ isOpen }}</p>
-      <p style="color: green;">isOpen.value: {{ isOpen.value }}</p>
-      <button
-        @click="isOpen = false"
-        style="background: red; color: white; border: none; padding: 5px 10px; cursor: pointer;"
+    <transition name="dropdown">
+      <div
+        v-if="isOpen"
+        ref="dropdown"
+        class="notification-menu"
+        @click.stop
       >
-        Close
-      </button>
-    </div>
+        <!-- Header -->
+        <div class="notification-header">
+          <h3 class="notification-title">Notifications</h3>
+          <div class="notification-actions">
+            <button
+              v-if="unreadCount > 0"
+              @click="markAllAsRead"
+              class="mark-read-btn"
+            >
+              Mark all read
+            </button>
+            <button @click="clearAll" class="clear-btn">
+              Clear all
+            </button>
+          </div>
+        </div>
+
+        <!-- Notification List -->
+        <div class="notification-list">
+          <div
+            v-for="notification in recentNotifications"
+            :key="notification.id"
+            @click="handleNotificationClick(notification)"
+            class="notification-item"
+            :class="{ 'unread': !notification.read }"
+          >
+            <!-- Avatar/Icon -->
+            <div class="notification-avatar">
+              <span v-if="notification.user?.avatar" class="user-avatar">
+                {{ notification.user.avatar }}
+              </span>
+              <span v-else class="notification-icon">
+                {{ getNotificationIcon(notification.type) }}
+              </span>
+            </div>
+
+            <!-- Content -->
+            <div class="notification-content">
+              <div class="notification-message">
+                <span v-if="notification.user" class="user-name">
+                  {{ notification.user.name }}
+                </span>
+                <span class="notification-text">{{ notification.message }}</span>
+              </div>
+              <div class="notification-time">
+                {{ getTimeAgo(notification.timestamp) }}
+              </div>
+            </div>
+
+            <!-- Unread Indicator -->
+            <div v-if="!notification.read" class="unread-dot"></div>
+
+            <!-- Close Button -->
+            <button
+              @click.stop="remove(notification.id)"
+              class="notification-close"
+            >
+              ×
+            </button>
+          </div>
+
+          <!-- Empty State -->
+          <div v-if="recentNotifications.length === 0" class="empty-state">
+            <div class="empty-icon">🔔</div>
+            <div class="empty-text">No notifications yet</div>
+            <div class="empty-subtext">We'll notify you when something happens</div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div v-if="notifications.length > 10" class="notification-footer">
+          <button class="view-all-btn">
+            View All Notifications
+          </button>
+        </div>
+      </div>
+    </transition>
 
     <!-- Backdrop -->
-    <!-- <div
+    <div
       v-if="isOpen"
       class="notification-backdrop"
       @click="closeDropdown"
-    ></div> -->
+    ></div>
   </div>
 </template>
 
@@ -42,26 +118,18 @@ const notificationStore = useNotificationStore()
 const {
   notifications,
   unreadCount,
-  recentNotifications,
-  getNotificationIcon,
-  getTimeAgo
+  recentNotifications
 } = storeToRefs(notificationStore)
 
-const { markAsRead, markAllAsRead, remove, clear } = notificationStore
+const { markAsRead, markAllAsRead, remove, clear, getNotificationIcon, getTimeAgo } = notificationStore
 
 const isOpen = ref(false)
 const dropdown = ref(null)
 
-const handleBellClick = () => {
-  console.log('Bell clicked!')
-  console.log('isOpen before:', isOpen.value)
-  isOpen.value = !isOpen.value
-  console.log('isOpen after:', isOpen.value)
-}
-
 const toggleDropdown = () => {
-  console.log('Bell clicked!')
+  console.log('🔔 Bell clicked! Current state:', isOpen.value)
   isOpen.value = !isOpen.value
+  console.log('🔔 New state:', isOpen.value)
 }
 
 const closeDropdown = () => {
@@ -108,7 +176,7 @@ onUnmounted(() => {
 .notification-dropdown {
   position: relative;
   display: inline-block;
-  z-index: 50;
+  z-index: 100;
 }
 
 .notification-bell {
@@ -122,10 +190,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: auto;
-  z-index: 10;
+  z-index: 101;
   min-width: 40px;
   min-height: 40px;
+  pointer-events: all;
 }
 
 .notification-bell:hover {

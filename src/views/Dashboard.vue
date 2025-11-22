@@ -149,9 +149,6 @@
                   Ship Status
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Pro. Date
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Order Number
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -184,9 +181,6 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {{ shipment.shipStatus }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {{ shipment.proDate }}
-                </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
                   {{ shipment.orderNumber }}
                 </td>
@@ -203,7 +197,7 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center space-x-2">
-                    <span class="text-sm">🇺🇸</span>
+                    <span class="text-sm">��</span>
                     <span class="text-sm text-gray-900">{{ shipment.country }}</span>
                   </div>
                 </td>
