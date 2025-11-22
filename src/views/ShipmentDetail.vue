@@ -113,11 +113,15 @@
               <div v-else class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <p class="text-yellow-800 mb-3">⚠️ No transporter assigned yet</p>
                 <button 
+                  v-if="userStore.canAssignTransporters"
                   @click="showAssignForm = true"
                   class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
                 >
                   Assign Transporter
                 </button>
+                <div v-else class="text-sm text-yellow-700">
+                  Only administrators can assign transporters
+                </div>
               </div>
             </div>
           </div>
@@ -125,32 +129,19 @@
           <!-- Sidebar -->
           <div class="space-y-6">
             <!-- Assign Transporter Form -->
-            <div v-if="showAssignForm" class="bg-white rounded-lg shadow p-6">
+            <div v-if="showAssignForm && userStore.canAssignTransporters" class="bg-white rounded-lg shadow p-6">
               <h3 class="text-lg font-semibold text-gray-900 mb-4">Assign Transporter</h3>
               
               <form @submit.prevent="handleAssignTransporter" class="space-y-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Select Transporter *
-                  </label>
-                  <select 
+                  <SelectDropdown
                     v-model="selectedTransporter"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    :class="{ 'border-red-500': formError && !selectedTransporter }"
-                    required
-                  >
-                    <option value="">-- Choose a transporter --</option>
-                    <option 
-                      v-for="transporter in transporters" 
-                      :key="transporter.id" 
-                      :value="transporter.id"
-                    >
-                      {{ transporter.name }} (⭐ {{ transporter.rating }})
-                    </option>
-                  </select>
-                  <p v-if="formError && !selectedTransporter" class="mt-1 text-sm text-red-600">
-                    Please select a transporter
-                  </p>
+                    label="Select Transporter"
+                    :required="true"
+                    :error="formError && !selectedTransporter ? 'Please select a transporter' : ''"
+                    placeholder="-- Choose a transporter --"
+                    :options="transporterOptions"
+                  />
                 </div>
 
                 <!-- Transporter Details -->
@@ -243,13 +234,16 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useShipmentStore } from '@/stores/shipmentStore'
+import { useUserStore } from '@/stores/userStore'
 import { useToast } from '@/composables/useToast'
 import Navbar from '@/components/Navbar.vue'
 import LiveTracking from '@/components/LiveTracking.vue'
+import SelectDropdown from '@/components/ui/SelectDropdown.vue'
 
 const route = useRoute()
 const router = useRouter()
 const shipmentStore = useShipmentStore()
+const userStore = useUserStore()
 const { transporters, loading } = storeToRefs(shipmentStore)
 const { success, error: showError, warning, info } = useToast()
 
@@ -265,6 +259,13 @@ const formError = ref(false)
 const selectedTransporterDetails = computed(() => {
   if (!selectedTransporter.value) return null
   return transporters.value.find(t => t.id === parseInt(selectedTransporter.value))
+})
+
+const transporterOptions = computed(() => {
+  return transporters.value.map(transporter => ({
+    value: transporter.id,
+    label: `${transporter.name} (⭐ ${transporter.rating})`
+  }))
 })
 
 onMounted(async () => {
@@ -288,8 +289,8 @@ onMounted(async () => {
     info('Shipment Loaded', `Viewing details for order ${shipment.value.orderNumber}`, 3000)
   }
   
-  // Show assign form if no transporter assigned
-  if (shipment.value && !shipment.value.assignedTransporter) {
+  // Show assign form if no transporter assigned and user is admin
+  if (shipment.value && !shipment.value.assignedTransporter && userStore.canAssignTransporters) {
     showAssignForm.value = true
   }
 })

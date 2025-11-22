@@ -14,9 +14,64 @@ This is my implementation of the transport shipment tracker test case. I built a
 - TailwindCSS for styling
 - Vite as build tool
 
-## What I Built
+## Advanced Features (Test Case Continuation)
 
-**Base Requirements:**
+### ✅ Role-Based Access Control (RBAC)
+- **Admin Role**: Can assign transporters, add shipments, full access
+- **Viewer Role**: Read-only access, cannot modify data
+- **Role Switching**: Switch between Admin/Viewer in navbar dropdown
+- **Persistent Roles**: Roles saved in localStorage
+
+### ✅ Pagination & Search
+- **Client-side Pagination**: Navigate through shipment pages
+- **Advanced Search**: Search by origin, destination, or transporter name
+- **Real-time Filtering**: Instant results as you type
+- **Search Field Selection**: Choose which field to search in
+
+### ✅ Global Notification System
+- **Auto-dismiss Notifications**: Toast notifications that disappear automatically
+- **Bottom Positioning**: Moved to bottom-right to avoid blocking UI
+- **Multiple Types**: Success, error, warning, and info notifications
+- **Smooth Animations**: Slide in/out animations
+
+### ✅ Component Reusability & Architecture
+- **Reusable UI Components**:
+  - `Table.vue` - Generic table component with slots
+  - `Input.vue` - Reusable input with validation
+  - `SelectDropdown.vue` - Styled select dropdown
+- **Composables Architecture**:
+  - `useShipments.js` - Centralized shipment logic
+  - `useToast.js` - Enhanced with notification system
+- **Separation of Concerns**: API logic moved to composables
+
+### ✅ Unit Testing
+- **Vitest Setup**: Modern testing framework configured
+- **Transporter Assignment Tests**: Comprehensive test coverage
+- **Store Logic Testing**: Pinia store functionality tested
+- **Mock Integration**: API mocking for isolated testing
+
+## Tech Stack Enhancements
+
+**Testing & Quality:**
+- Vitest - Modern testing framework
+- Vue Test Utils - Component testing utilities
+- jsdom - DOM simulation for tests
+
+**Architecture Improvements:**
+- Composables pattern for reusable logic
+- Component library for UI consistency
+- Enhanced state management with RBAC
+
+**User Experience:**
+- Advanced search and filtering
+- Role-based UI adaptation
+- Global notification system
+- Responsive pagination controls
+- Statistics dashboard
+
+## Features
+
+**Base Requirements (Original Test Case):**
 - ✅ List page showing all shipments
 - ✅ Detail page for each shipment
 - ✅ Assign transporter functionality with validation
@@ -24,35 +79,24 @@ This is my implementation of the transport shipment tracker test case. I built a
 - ✅ Routing with Vue Router
 - ✅ Mock API with dummy data
 
-**Extra Features I Added:**
-- Real-time status updates (simulated with setInterval)
-- Toast notification system
-- Action menu with multiple options
-- Responsive design for mobile
-- Live tracking widget
-- Statistics dashboard
+**Advanced Features (Continuation Test Case):**
+- ✅ **RBAC System**: Admin/Viewer roles with conditional UI
+- ✅ **Pagination**: Client-side pagination with navigation
+- ✅ **Search & Filter**: Multi-field search functionality
+- ✅ **Global Notifications**: Auto-dismiss toast notifications
+- ✅ **Component Reusability**: Generic UI components (Table, Input, Select)
+- ✅ **Architecture Refactor**: API logic moved to composables
+- ✅ **Unit Testing**: Vitest setup with comprehensive test coverage
 
-## Features
-
-**What the test case asked for:**
-- ✅ List page with all shipments
-- ✅ Detail page for each shipment  
-- ✅ Assign transporter functionality
-- ✅ Form validation
-- ✅ State management with Pinia
-- ✅ Vue Router navigation
-- ✅ Mock API
-
-**Extra stuff I added:**
-- Real-time updates (simulated every 10 seconds)
-- Toast notifications for user feedback
+**Extra Features Added:**
+- Real-time status updates (simulated every 10 seconds)
+- Toast notification system (both legacy and new)
 - Action menu with multiple options (view, track, print, duplicate, delete)
-- Statistics dashboard with cards
-- Interactive chart showing shipment trends
-- Live tracking widget
-- Responsive design (works on mobile)
-- Loading states
-- Smooth animations
+- Responsive design for mobile and desktop
+- Live tracking widget with timeline
+- Statistics dashboard with visual cards
+- Role switching in navbar
+- Persistent authentication state
 
 **Bonus features from test case:**
 - Real-time update simulation ✅
@@ -62,52 +106,73 @@ This is my implementation of the transport shipment tracker test case. I built a
 ## Quick Start
 
 ```bash
-# Install dependencies
-npm install
-
-# Run dev server
-npm run dev
-
-# Open browser
-http://localhost:5173
+npm run dev      # Start development server
+npm run build    # Build for production
+npm run preview  # Preview production build
+npm test         # Run tests in watch mode
+npm run test:run # Run tests once
 ```
 
-That's it! The app should be running now.
+### Running Tests
 
-## Project Structure
+```bash
+# Run tests in watch mode (recommended for development)
+npm test
+
+# Run tests once (for CI/CD)
+npm run test:run
+```
+
+**Test Coverage:**
+- ✅ Transporter assignment logic validation
+- ✅ Store state management
+- ✅ Error handling scenarios
+- ✅ Loading state management
+
+## Project Structure (Updated)
 
 Here's how I organized the files:
 
 ```
 src/
-├── components/          # Reusable components
-│   ├── Navbar.vue      # Top navigation
-│   ├── StatCard.vue    # Stats display cards
-│   ├── ChartCard.vue   # Chart component
-│   ├── LiveTracking.vue # Tracking widget
-│   ├── Toast.vue       # Toast notification
-│   └── ToastContainer.vue
+├── components/
+│   ├── ui/                    # Reusable UI components
+│   │   ├── Table.vue         # Generic table component
+│   │   ├── Input.vue         # Reusable input component
+│   │   └── SelectDropdown.vue # Styled select dropdown
+│   ├── Navbar.vue            # Top navigation with RBAC
+│   ├── StatCard.vue          # Stats display cards
+│   ├── ChartCard.vue         # Chart component
+│   ├── LiveTracking.vue      # Tracking widget
+│   ├── Toast.vue             # Toast notification
+│   ├── ToastContainer.vue    # Toast container
+│   └── NotificationContainer.vue # Global notifications
 │
-├── views/              # Main pages
-│   ├── Dashboard.vue   # Homepage with shipment list
-│   └── ShipmentDetail.vue # Detail page
+├── views/
+│   ├── Dashboard.vue         # Homepage with pagination & search
+│   └── ShipmentDetail.vue    # Detail page with RBAC
 │
 ├── stores/
-│   └── shipmentStore.js # Pinia store for state
-│
-├── services/
-│   └── apiService.js   # Mock API calls
-│
-├── data/
-│   └── mockData.js     # Dummy shipment data
+│   ├── shipmentStore.js      # Pinia store for shipments
+│   ├── userStore.js          # RBAC user management
+│   ├── notificationStore.js  # Global notifications
+│   └── __tests__/            # Unit tests
+│       └── shipmentStore.test.js
 │
 ├── composables/
-│   └── useToast.js     # Toast notification logic
+│   ├── useShipments.js       # Shipment logic & pagination
+│   └── useToast.js           # Enhanced toast system
+│
+├── services/
+│   └── apiService.js         # Mock API calls
+│
+├── data/
+│   └── mockData.js           # Dummy shipment data
 │
 ├── router/
-│   └── index.js        # Route config
+│   └── index.js              # Route config
 │
-└── style.css          # Global styles
+└── style.css                 # Global styles
 ```
 
 Pretty standard Vue 3 structure. I separated components from pages and created a service layer for API calls (even though it's just mock data for now).

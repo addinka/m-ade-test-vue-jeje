@@ -13,14 +13,44 @@ export const useShipmentStore = defineStore('shipment', () => {
   const loading = ref(false)
   const error = ref(null)
 
+  // Search & Pagination State
+  const searchQuery = ref('')
+  const currentPage = ref(1)
+  const itemsPerPage = ref(5)
+
   // Getters
   const totalShipments = computed(() => shipments.value.length)
-  const assignedShipments = computed(() => 
+  const assignedShipments = computed(() =>
     shipments.value.filter(s => s.status === 'Assigned').length
   )
-  const notAssignedShipments = computed(() => 
+  const notAssignedShipments = computed(() =>
     shipments.value.filter(s => s.status !== 'Assigned').length
   )
+
+  // Filtered shipments based on search
+  const filteredShipments = computed(() => {
+    if (!searchQuery.value) return shipments.value
+
+    const query = searchQuery.value.toLowerCase()
+    return shipments.value.filter(shipment =>
+      shipment.origin?.toLowerCase().includes(query) ||
+      shipment.destination?.toLowerCase().includes(query) ||
+      shipment.assignedTransporter?.toLowerCase().includes(query) ||
+      shipment.name?.toLowerCase().includes(query)
+    )
+  })
+
+  // Paginated shipments
+  const paginatedShipments = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage.value
+    const end = start + itemsPerPage.value
+    return filteredShipments.value.slice(start, end)
+  })
+
+  // Pagination info
+  const totalPages = computed(() => Math.ceil(filteredShipments.value.length / itemsPerPage.value))
+  const hasNextPage = computed(() => currentPage.value < totalPages.value)
+  const hasPrevPage = computed(() => currentPage.value > 1)
 
   // Actions
   async function fetchShipments() {
@@ -111,6 +141,35 @@ export const useShipmentStore = defineStore('shipment', () => {
     updateCallbacks.push(callback)
   }
 
+  // Search & Pagination Actions
+  function setSearchQuery(query) {
+    searchQuery.value = query
+    currentPage.value = 1 // Reset to first page when searching
+  }
+
+  function setCurrentPage(page) {
+    if (page >= 1 && page <= totalPages.value) {
+      currentPage.value = page
+    }
+  }
+
+  function nextPage() {
+    if (hasNextPage.value) {
+      currentPage.value++
+    }
+  }
+
+  function prevPage() {
+    if (hasPrevPage.value) {
+      currentPage.value--
+    }
+  }
+
+  function resetPagination() {
+    currentPage.value = 1
+    searchQuery.value = ''
+  }
+
   return {
     // State
     shipments,
@@ -118,10 +177,20 @@ export const useShipmentStore = defineStore('shipment', () => {
     statistics,
     loading,
     error,
+    searchQuery,
+    currentPage,
+    itemsPerPage,
+
     // Getters
     totalShipments,
     assignedShipments,
     notAssignedShipments,
+    filteredShipments,
+    paginatedShipments,
+    totalPages,
+    hasNextPage,
+    hasPrevPage,
+
     // Actions
     fetchShipments,
     fetchTransporters,
@@ -129,6 +198,11 @@ export const useShipmentStore = defineStore('shipment', () => {
     getShipmentById,
     assignTransporter,
     startRealtimeUpdates,
-    onStatusUpdate
+    onStatusUpdate,
+    setSearchQuery,
+    setCurrentPage,
+    nextPage,
+    prevPage,
+    resetPagination
   }
 })

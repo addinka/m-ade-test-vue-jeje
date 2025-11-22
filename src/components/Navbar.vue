@@ -26,19 +26,8 @@
         
         <!-- Right side -->
         <div class="flex items-center space-x-4">
-          <!-- Notification Badge -->
-          <button 
-            @click="toggleNotifications" 
-            class="relative p-2 text-gray-400 hover:text-gray-500 transition-colors"
-          >
-            <span class="text-xl">�</span>
-            <span 
-              v-if="unreadNotifications > 0"
-              class="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center"
-            >
-              {{ unreadNotifications }}
-            </span>
-          </button>
+          <!-- Notification Dropdown -->
+          <NotificationDropdown />
           
           <!-- User Menu -->
           <div class="relative">
@@ -47,9 +36,12 @@
               class="flex items-center space-x-2 hover:bg-gray-50 rounded-lg px-2 py-1 transition-colors"
             >
               <div class="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-sm font-semibold">
-                A
+                {{ userStore.currentUser?.avatar || '👤' }}
               </div>
-              <span class="text-sm font-medium text-gray-700">Admin</span>
+              <div class="text-left">
+                <div class="text-sm font-medium text-gray-700">{{ userStore.currentUser?.name || 'User' }}</div>
+                <div class="text-xs text-gray-500 capitalize">{{ userStore.userRole }}</div>
+              </div>
               <span class="text-gray-400 transition-transform" :class="{ 'rotate-180': showUserMenu }">▼</span>
             </button>
             
@@ -60,7 +52,7 @@
                 class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2"
               >
                 <a 
-                  v-for="item in userMenuItems"
+                  v-for="item in userMenuItems.filter(item => item.show !== false)"
                   :key="item.label"
                   href="#"
                   @click.prevent="handleUserMenuClick(item)"
@@ -99,13 +91,15 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
+import { useUserStore } from '@/stores/userStore'
+import NotificationDropdown from '@/components/NotificationDropdown.vue'
 
 const route = useRoute()
 const router = useRouter()
-const { info, warning } = useToast()
+const userStore = useUserStore()
+const { info, warning, success } = useToast()
 
 const showUserMenu = ref(false)
-const unreadNotifications = ref(3)
 
 const navigationItems = ref([
   { path: '/', label: 'Dashboard', icon: '🏠' },
@@ -115,9 +109,11 @@ const navigationItems = ref([
   { path: '/settings', label: 'Settings', icon: '⚙️' }
 ])
 
-const userMenuItems = ref([
+const userMenuItems = computed(() => [
   { label: 'Profile', icon: '👤', action: 'profile' },
   { label: 'Settings', icon: '⚙️', action: 'settings' },
+  { label: 'Switch to Admin', icon: '👑', action: 'switch-admin', show: userStore.isViewer },
+  { label: 'Switch to Viewer', icon: '👁️', action: 'switch-viewer', show: userStore.isAdmin },
   { label: 'Help', icon: '❓', action: 'help' },
   { label: 'Logout', icon: '🚪', action: 'logout' }
 ])
@@ -130,11 +126,6 @@ const toggleUserMenu = () => {
   showUserMenu.value = !showUserMenu.value
 }
 
-const toggleNotifications = () => {
-  info('Notifications', `You have ${unreadNotifications.value} unread notifications`)
-  unreadNotifications.value = 0
-}
-
 const handleNavClick = (item) => {
   if (item.path !== '/' && !route.path.startsWith(item.path)) {
     warning('Coming Soon', `${item.label} page is under development`)
@@ -144,10 +135,22 @@ const handleNavClick = (item) => {
 const handleUserMenuClick = (item) => {
   showUserMenu.value = false
   
-  if (item.action === 'logout') {
-    warning('Logout', 'Logout functionality will be implemented')
-  } else {
-    info(item.label, `${item.label} feature coming soon`)
+  switch (item.action) {
+    case 'switch-admin':
+      userStore.switchRole(userStore.ROLES.ADMIN)
+      success('Role Switched', 'You are now logged in as Admin')
+      break
+    case 'switch-viewer':
+      userStore.switchRole(userStore.ROLES.VIEWER)
+      success('Role Switched', 'You are now logged in as Viewer')
+      break
+    case 'logout':
+      userStore.logout()
+      success('Logged Out', 'You have been logged out successfully')
+      router.push('/')
+      break
+    default:
+      info(item.label, `${item.label} feature coming soon`)
   }
 }
 
